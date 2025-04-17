@@ -12,9 +12,10 @@ const int ldrTop = A0;    // Top Center
 const int ldrLeft = A1;   // Left Center
 const int ldrRight = A2;  // Right Center
 const int ldrBottom = A3; // Bottom Center
+const int voltinp = A5;
 
 // Control Parameters
-float sensitivity = 0.15;
+float sensitivity = 0.05;
 unsigned long lastUpdate = 0;
 const int updateInterval = 20;
 
@@ -26,17 +27,13 @@ const int H_CENTER = 90, V_CENTER = 70;
 void setup() {
   Serial.begin(9600);
   BT.begin(9600);
-  
-  pinMode(ldrTop, INPUT);
-  pinMode(ldrLeft, INPUT);
-  pinMode(ldrRight, INPUT);
-  pinMode(ldrBottom, INPUT);
 
   horizontalServo.attach(horizontalPin);
   verticalServo.attach(verticalPin);
   horizontalServo.write(H_CENTER);
   verticalServo.write(V_CENTER);
   delay(1000);
+
 }
 
 void loop() {
@@ -54,17 +51,32 @@ void loop() {
 
 void trackLight() {
   if (millis() - lastUpdate < updateInterval) return;
+  
+  // Read initial LDR values
+  int top = 0;
+  int left = 0;
+  int right = 0;
+  int bottom = 0;
+
+  // Print initial LDR values
+  Serial.println("Initial LDR values:");
+  Serial.print("Top: "); Serial.println(top);
+  Serial.print("Left: "); Serial.println(left);
+  Serial.print("Right: "); Serial.println(right);
+  Serial.print("Bottom: "); Serial.println(bottom);
 
   // Read LDR values
-  int top = analogRead(ldrTop);
-  int left = analogRead(ldrLeft);
-  int right = analogRead(ldrRight);
-  int bottom = analogRead(ldrBottom);
+  top = analogRead(ldrTop);
+  left = analogRead(ldrLeft);
+  right = analogRead(ldrRight);
+  bottom = analogRead(ldrBottom);
 
+  // Print current LDR values and solar panel voltage
   Serial.print("LDR1: "); Serial.print(top);
   Serial.print(" | LDR2: "); Serial.print(left); 
   Serial.print(" | LDR3: "); Serial.print(right);
-  Serial.print(" | LDR4: "); Serial.println(bottom);
+  Serial.print(" | LDR4: "); Serial.print(bottom);
+  Serial.print(" | Solar panel: "); Serial.println(analogRead(voltinp));
 
   // Calculate differences
   int hDiff = left - right;  // Positive = left brighter
@@ -86,6 +98,7 @@ void handleBluetooth() {
   while (BT.available()) {
     char command = BT.read();
     command = toupper(command);
+
     int currentH = horizontalServo.read();
     int currentV = verticalServo.read();
 
